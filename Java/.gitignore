@@ -1,0 +1,9 @@
+.metadata/.lock
+.metadata/_lock
+.metadata/.log
+.metadata/_log
+.metadata/.mylyn
+.metadata/.plugins
+bin
+*.jar
+*.zip
