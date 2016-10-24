@@ -35,5 +35,30 @@ Assert.IsFalse(modelManger.IsChild(Specimen, OnExaminationJointSynovialThickenin
 
 
 Java - the following shows how to use SnomedQuery from Java. The calling program needs to
-reference the ??????????
+reference org.joda.time for the DateTime object.  The calling program itself must
+have SnomedQuery.jar included on the buildpath as well as joda-time.
 
+final long snomedConceptId = 138875005;
+final long bodyStructure = 123037004;
+final long specimen = 123038009;
+final long clinicalFinding = 404684003;
+final long onExaminationJointSynovialThickening = 164527008;
+
+// Create the model manager. Tell the constructor where to find the preparesed records.
+SnomedModelManager modelManger = new SnomedModelManager("\\..\\..\\Data");
+modelManager.loadRecords();
+
+// Body structure is child of concept. Function returns 'true'.
+modelManager.isChild(snomedConceptId, bodyStructure);
+
+// Body structure is child of specimen. Function returns 'true'.
+modelManager.isChild(snomedConceptId, specimen);
+
+// OnExaminationJointSynovialThickening is child of concept. Function returns 'true'.
+modelManager.isChild(snomedConceptId, onExaminationJointSynovialThickening);
+
+// OnExaminationJointSynovialThickening is child of finding. Function returns 'true'.
+modelManager.isChild(clinicalFinding, onExaminationJointSynovialThickening);
+
+// OnExaminationJointSynovialThickening is NOT child of specimen. Function returns 'false'.
+modelManager.isChild(specimen, onExaminationJointSynovialThickening);
