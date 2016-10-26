@@ -1,0 +1,35 @@
+1.0
+Initial release with 'isAChild' query as primary API call.
+
+1.0.1
+Documentation directory '/doc' added with full JavaDoc structure along with
+updated JavaDoc comments in source code.
+
+1.0.2
+Added two new API methods.
+isImmediateChild:
+
+- Use after loading records in the model manager.
+- Returns true if the child has a direct link to the parent.
+Code Example:
+/*create a model manager and tell it the directory the data is contained in
+when constructing it.*/
+SnomedModelManager modelManger = new SnomedModelManager("\\..\\..\\Data");
+modelManager.loadRecords();
+
+/*call the method. it will return true if the child is directly related to the
+parent.*/
+modelManager.isImmediateChild(parentId, childId);
+
+getChildrenIds:
+- use after loading records in the model manager.
+- returns a long array object contianing SNOMED Id's that belong to the children
+of the parent parameter.
+
+/*create a model manager and tell it the directory the data is contained in
+when constructing it.*/
+SnomedModelManager modelManger = new SnomedModelManager("\\..\\..\\Data");
+modelManager.loadRecords();
+
+//call the method. Will return a populated array if the parent has child objects
+long[] childIds = modelManager.getChildrenIds(parentId);
