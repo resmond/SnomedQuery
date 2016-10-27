@@ -305,5 +305,76 @@ namespace SnomedQuery.Model
       ConcurrentDictionary<Int64, SnomedQueryConcept> visitedItems = new ConcurrentDictionary<long, SnomedQueryConcept>();
       return this.IsChild(visitedItems, parent, childID);
     }
+
+    /// <summary>
+    /// Collect child IDs of parent and continue visitor pattern onward with children.
+    /// </summary>
+    /// <param name="visitedItems">Items already visited. Dont go there again</param>
+    /// <param name="decendents">All IDs of children visited from public FindDecendents.</param>
+    /// <param name="parent">parent concept</param>
+    /// <returns></returns>
+    void FindDecendents(ConcurrentDictionary<Int64, SnomedQueryConcept> visitedItems,
+       SnomedQueryConcept thisConcept)
+    {
+      foreach (SnomedQueryConcept child in thisConcept.IsAChildren)
+      {
+        // If we have not visited this before.
+        if (visitedItems.TryAdd(child.ConceptId, child) == true)
+        {
+          this.FindDecendents(visitedItems, child);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Collect child IDs of parent and continue visitor pattern onward with children.
+    /// </summary>
+    /// <param name="visitedItems">Items already visited. Dont go there again</param>
+    /// <param name="ancestors">All IDs of parents visited from public FindAncestors.</param>
+    /// <param name="parent">parent concept</param>
+    /// <returns></returns>
+    void FindAncestors(ConcurrentDictionary<Int64, SnomedQueryConcept> visitedItems,
+       SnomedQueryConcept thisConcept)
+    {
+      foreach (SnomedQueryConcept parent in thisConcept.IsAParents)
+      {
+        // If we have not visited this before.
+        if (visitedItems.TryAdd(parent.ConceptId, parent) == true)
+        {
+          this.FindAncestors(visitedItems, parent);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Return Ancestors concepts of parent, does not include parent.
+    /// </summary>
+    /// <param name="parentID"></param>
+    /// <returns></returns>
+    public SnomedQueryConcept[] FindAncestors(Int64 currentId)
+    {
+      SnomedQueryConcept currentConcept = this.GetConceptById(currentId);
+      ConcurrentDictionary<Int64, SnomedQueryConcept> ancestorIDs = new ConcurrentDictionary<Int64, SnomedQueryConcept>();
+      this.FindAncestors(ancestorIDs, currentConcept);
+
+      SnomedQueryConcept[] retVal = new SnomedQueryConcept[ancestorIDs.Count];
+      ancestorIDs.Values.CopyTo(retVal, 0);
+      return retVal;
+    }
+
+    /// <summary>
+    /// Return Descendant concepts of parent, does not include parent.
+    /// </summary>
+    /// <param name="parentID"></param>
+    /// <returns></returns>
+    public SnomedQueryConcept[] FindDecendents(Int64 currentId)
+    {
+      SnomedQueryConcept currentConcept = this.GetConceptById(currentId);
+      ConcurrentDictionary<Int64, SnomedQueryConcept> decendentIDs = new ConcurrentDictionary<Int64, SnomedQueryConcept>();
+      this.FindDecendents(decendentIDs, currentConcept);
+      SnomedQueryConcept[] retVal = new SnomedQueryConcept[decendentIDs.Count];
+      decendentIDs.Values.CopyTo(retVal, 0);
+      return retVal;
+    }
   }
 }
