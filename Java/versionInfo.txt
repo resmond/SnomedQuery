@@ -33,3 +33,6 @@ modelManager.loadRecords();
 
 //call the method. Will return a populated array if the parent has child objects
 long[] childIds = modelManager.getChildrenIds(parentId);
+
+1.0.3
+Added two closure methdods. Updated the javadocs. 
