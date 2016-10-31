@@ -4,6 +4,6 @@ Initial release with 'isAChild' query as primary API call.
 1.0.1
 Documentation directory '/doc' added with full JavaDoc structure along with
 updated JavaDoc comments in source code.
-
+  
 1.0.2
 Added two closure methdods. Updated the javadocs.
