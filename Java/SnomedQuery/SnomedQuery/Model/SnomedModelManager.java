@@ -52,7 +52,7 @@ public class SnomedModelManager {
 
 	/**
 	 * <p>
-	 * Base directory for data files when deserializing
+	 * Base directory for data files when deserializing.
 	 * </p>
 	 */
 	private String baseDir;
@@ -70,7 +70,7 @@ public class SnomedModelManager {
 	 * Constructs a Path to the RawData directory.
 	 * </p>
 	 * 
-	 * @return the RawData sub-directory of baseDir
+	 * @return The RawData sub-directory of baseDir.
 	 */
 	public String getRawDataDir() {
 		return this.baseDir + "\\" + "RawData";
@@ -81,7 +81,7 @@ public class SnomedModelManager {
 	 * Constructs a Path to the ParsedData directory.
 	 * </p>
 	 * 
-	 * @return the ParsedData sub-directory of baseDir
+	 * @return The ParsedData sub-directory of baseDir.
 	 */
 	public String getParsedRecordsDir() {
 		return this.baseDir + "\\" + "ParsedRecords";
@@ -93,7 +93,7 @@ public class SnomedModelManager {
 	 * </p>
 	 * 
 	 * @param baseDirParam
-	 *            sets the baseDir value
+	 *            Sets the baseDir value.
 	 */
 	public SnomedModelManager(String baseDirParam) {
 		this.baseDir = baseDirParam;
@@ -101,7 +101,7 @@ public class SnomedModelManager {
 
 	/**
 	 * <p>
-	 * Loads the Snomed Concepts into memory.
+	 * Loads the SNOMED Concepts into memory.
 	 * </p>
 	 */
 	public void loadRecords() {
@@ -160,13 +160,13 @@ public class SnomedModelManager {
 
 	/**
 	 * <p>
-	 * Add snomed query concept to model manager.
+	 * Add SNOMED query concept to model manager.
 	 * </p>
 	 * 
 	 * @param concept
-	 *            the concept that will be inserted into <b>snomedConcepts</b>
+	 *            The concept that will be inserted into <b>snomedConcepts</b>.
 	 * @throws Exception
-	 *             general exception, custom message.
+	 *             General exception, custom message.
 	 */
 	public void add(SnomedQueryConcept concept) throws Exception {
 		if (this.snomedConcepts.putIfAbsent(concept.getConceptId(),
@@ -194,11 +194,11 @@ public class SnomedModelManager {
 
 	/**
 	 * <p>
-	 * gets the length of the char[] to be deserialized first, then deserializes
+	 * Gets the length of the char[] to be deserialized first, then deserializes
 	 * the bytes before validating them.
 	 * </p>
 	 * 
-	 * @return parsed and validated string created from byte[]
+	 * @return Parsed and validated string created from byte[].
 	 */
 	String getString() {
 		boolean invalid = true;
@@ -246,11 +246,11 @@ public class SnomedModelManager {
 
 	/**
 	 * <p>
-	 * constructs a String array by reading th length of the String array first
-	 * out of <b>binaryReader</b> before
+	 * Constructs a String array by reading th length of the String array first
+	 * out of <b>binaryReader</b> before.
 	 * </p>
 	 * 
-	 * @return deserialized String array.
+	 * @return Deserialized String array.
 	 */
 	String[] getStringArray() {
 		int length = this.binaryReader.getInt();
@@ -266,7 +266,7 @@ public class SnomedModelManager {
 	 * constructs a JodaTime DateTime object out of <b>binaryReader</b>.
 	 * </p>
 	 * 
-	 * @return a new DateTime object.
+	 * @return A new DateTime object.
 	 */
 	DateTime getDateTime() {
 		return new DateTime(this.binaryReader.getLong());
@@ -278,7 +278,7 @@ public class SnomedModelManager {
 	 * </p>
 	 * 
 	 * @param concept
-	 *            concept to have relationships linked to it
+	 *            Concept to have relationships linked to it.
 	 */
 	void deserializeConceptRealtionship(SnomedQueryConcept concept) {
 		SnomedQueryConcept[] childConcepts = concept.getIsAChildren();
@@ -314,12 +314,12 @@ public class SnomedModelManager {
 	 * </p>
 	 * 
 	 * @param visitedItems
-	 *            persisted list of items that have already been viewed
+	 *            Persisted list of items that have already been viewed.
 	 * @param parent
-	 *            SnomedQueryConcept of which children is about to be parsed
+	 *            SnomedQueryConcept of which children is about to be parsed.
 	 * @param childId
-	 *            target child Id that is being searched
-	 * @return true if there is a child object with child id
+	 *            Target child Id that is being searched.
+	 * @return True if there is a child object with child id.
 	 */
 	public boolean isChild(HashMap<Long, SnomedQueryConcept> visitedItems,
 			SnomedQueryConcept parent, long childId) {
@@ -338,14 +338,14 @@ public class SnomedModelManager {
 
 	/**
 	 * <p>
-	 * Return true if parent is an ancestor of child
+	 * Return true if parent is an ancestor of child.
 	 * </p>
 	 * 
 	 * @param parentId
-	 *            parent Id
+	 *            Parent Id.
 	 * @param childId
-	 *            child Id
-	 * @return true if there is a child ancestor
+	 *            Child Id.
+	 * @return True if there is a child ancestor.
 	 */
 	public boolean isChild(long parentId, long childId) {
 		SnomedQueryConcept parent = this.getConceptById(parentId);
@@ -354,56 +354,13 @@ public class SnomedModelManager {
 	}
 
 	/**
-	 * <p>
-	 * Returns true if the parent hand child have a direct relationship.
-	 * </p>
-	 * 
-	 * @param parentId
-	 *            target parent Id
-	 * @param childId
-	 *            target child Id
-	 * @return true if the relationship is direct.
-	 */
-	public boolean isImmediateChild(long parentId, long childId) {
-		SnomedQueryConcept parent = this.getConceptById(parentId);
-		SnomedQueryConcept[] children = parent.getIsAChildren();
-		for (SnomedQueryConcept child : children) {
-			if (child.getConceptId() == childId)
-				return true;
-
-		}
-		return false;
-	}
-
-	/**
-	 * <p>
-	 * Returns a long Array of SNOMED Id's from a target record id.
-	 * </p>
-	 * 
-	 * @param parentId
-	 *            target parent Id
-	 * @return long array of SNOMED Id's, null if there are no child Id's.
-	 */
-	public long[] getChildrenIds(long parentId) {
-		SnomedQueryConcept parent = this.getConceptById(parentId);
-		SnomedQueryConcept[] children = parent.getIsAChildren();
-		if (children.length == 0)
-			return null;
-		long[] retVal = new long[children.length];
-		for (int i = 0; i < retVal.length; i++) {
-			retVal[i] = children[i].getConceptId();
-		}
-		return retVal;
-	}
-
-	/**
 	 * Collect children of parent and continue visitor pattern onward with
 	 * children.
 	 * 
 	 * @param visitedItems
-	 *            Items already visited
+	 *            Items already visited.
 	 * @param parent
-	 *            parent concept
+	 *            Parent concept.
 	 * @return the map of visited items.
 	 */
 	public HashMap<Long, SnomedQueryConcept> findDecendents(
@@ -421,10 +378,10 @@ public class SnomedModelManager {
 	/**
 	 * <p>
 	 * Collect child IDs of parent and continue visitor pattern onward with
-	 * children
+	 * children.
 	 * </p>
 	 * 
-	 * @param conceptId the queried Id
+	 * @param conceptId the queried Id.
 	 * @return The array of child concepts.
 	 */
 	public SnomedQueryConcept[] findDescendants(long conceptId) {
@@ -457,7 +414,7 @@ public class SnomedModelManager {
 		for (SnomedQueryConcept parent : child.getIsAParents()) {
 			if (!visitedItems.containsKey(parent.getConceptId())) {
 				visitedItems.put(parent.getConceptId(), parent);
-				this.findDecendents(visitedItems, parent);
+				this.findAncestors(visitedItems, parent);
 			}
 		}
 		return visitedItems;
@@ -465,11 +422,11 @@ public class SnomedModelManager {
 
 	/**
 	 * <p>
-	 * The start of finding all the parent Id's from target Id
+	 * The start of finding all the parent Id's from target Id.
 	 * </p>
 	 * 
 	 * @param conceptId
-	 *            the targetId that is to be queried
+	 *            the targetId that is to be queried.
 	 * @return All the parent objects in an array.
 	 */
 	public SnomedQueryConcept[] findAncestors(long conceptId) {
@@ -484,7 +441,6 @@ public class SnomedModelManager {
 			i++;
 		}
 		return retVal;
-
 	}
 
 }

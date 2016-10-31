@@ -25,7 +25,7 @@ public class SnomedQueryConcept {
 	 * 
 	 * @return conceptId value
 	 */
-	public long getConceptId() {
+	public final long getConceptId() {
 		return this.conceptId;
 	}
 
@@ -43,7 +43,7 @@ public class SnomedQueryConcept {
 	 * 
 	 * @return conceptFullyQualifiedName value
 	 */
-	public String getConceptFullyQualifiedName() {
+	public final String getConceptFullyQualifiedName() {
 		return this.conceptFullyQualifiedName;
 	}
 
@@ -61,7 +61,7 @@ public class SnomedQueryConcept {
 	 * 
 	 * @return conceptSynonyms array.
 	 */
-	public String[] getConceptSynonyms() {
+	public final String[] getConceptSynonyms() {
 		return this.conceptSynonyms;
 	}
 
@@ -97,7 +97,7 @@ public class SnomedQueryConcept {
 	 * 
 	 * @return conceptDefinitionStatus value
 	 */
-	public String getConceptDefinitionStatus() {
+	public final String getConceptDefinitionStatus() {
 		return this.conceptDefinitionStatus;
 	}
 
@@ -115,7 +115,7 @@ public class SnomedQueryConcept {
 	 * 
 	 * @return conceptEffectiveTime value
 	 */
-	public DateTime getConceptEffectiveTime() {
+	public final DateTime getConceptEffectiveTime() {
 		return this.conceptEffectiveTime;
 	}
 
@@ -133,7 +133,7 @@ public class SnomedQueryConcept {
 	 * 
 	 * @return isAParents value.
 	 */
-	public SnomedQueryConcept[] getIsAParents() {
+	public final SnomedQueryConcept[] getIsAParents() {
 		return this.isAParents;
 	}
 
@@ -145,7 +145,7 @@ public class SnomedQueryConcept {
 	 * @param isAParents
 	 *            setting isAParents
 	 */
-	public void setIsAParents(final SnomedQueryConcept[] isAParents) {
+	public final void setIsAParents(final SnomedQueryConcept[] isAParents) {
 		this.isAParents = isAParents;
 	}
 
@@ -163,7 +163,7 @@ public class SnomedQueryConcept {
 	 * 
 	 * @return isAChildren value
 	 */
-	public SnomedQueryConcept[] getIsAChildren() {
+	public final SnomedQueryConcept[] getIsAChildren() {
 		return this.isAChildren;
 	}
 
@@ -175,7 +175,7 @@ public class SnomedQueryConcept {
 	 * @param isAChildren
 	 *            value for setting is a children
 	 */
-	public void setIsAChildren(final SnomedQueryConcept[] isAChildren) {
+	public final void setIsAChildren(final SnomedQueryConcept[] isAChildren) {
 		this.isAChildren = isAChildren;
 	}
 
