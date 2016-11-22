@@ -8,6 +8,7 @@ using System.Runtime;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SnomedQuery.Parser
@@ -88,22 +89,36 @@ namespace SnomedQuery.Parser
       String relationshipPath,
       String descriptionPath)
     {
-      Task.WaitAll(
-        this.LoadConcepts(conceptPath),
-        this.LoadRelationships(relationshipPath),
-        this.LoadDescriptions(descriptionPath)
-        );
+      // Load main three snomed files (concepts, relationships, and descriptions).
+      // Load files concurrently
+      {
+        Thread loadConceptsTask = new Thread(() => this.LoadConcepts(conceptPath));
+        Thread loadRelationshipsTask = new Thread(() => this.LoadRelationships(relationshipPath));
+        Thread loadDescriptionsTask = new Thread(() => this.LoadDescriptions(descriptionPath));
 
-      Task fixConceptsTask = new Task(this.FixConcepts);
-      fixConceptsTask.Start();
+        loadConceptsTask.Start();
+        loadRelationshipsTask.Start();
+        loadDescriptionsTask.Start();
 
-      Task fixRelationshipsTask = new Task(this.FixRelationships);
-      fixRelationshipsTask.Start();
+        loadConceptsTask.Join();
+        loadRelationshipsTask.Join();
+        loadDescriptionsTask.Join();
+      }
 
-      Task fixDescriptionsTask = new Task(this.FixDescriptions);
-      fixDescriptionsTask.Start();
+      // Perform cleanup on above loaded files. 
+      {
+        Thread fixConceptsTask = new Thread(this.FixConcepts);
+        Thread fixRelationshipsTask = new Thread(this.FixRelationships);
+        Thread fixDescriptionsTask = new Thread(this.FixDescriptions);
 
-      Task.WaitAll(fixConceptsTask, fixRelationshipsTask, fixDescriptionsTask);
+        fixConceptsTask.Start();
+        fixRelationshipsTask.Start();
+        fixDescriptionsTask.Start();
+
+        fixConceptsTask.Join();
+        fixRelationshipsTask.Join();
+        fixDescriptionsTask.Join();
+      }
 
       this.RootConcept = this.FindSnomedConcept("SNOMED CT CONCEPT");
     }
@@ -113,7 +128,7 @@ namespace SnomedQuery.Parser
     /// Load raw snomed description data into memory.
     /// </summary>
     /// <param name="path"></param>
-    async Task LoadRelationships(String path)
+    void LoadRelationships(String path)
     {
       StreamReader sr = File.OpenText(path);
       String[] parts = sr.ReadLine().Split('\t');
@@ -135,9 +150,7 @@ namespace SnomedQuery.Parser
       RF2RelationshipGroup relationshipGroup = null;
       while (true)
       {
-        Task<String> lineTask = sr.ReadLineAsync();
-        await lineTask;
-        String line = lineTask.Result;
+        String line = sr.ReadLine();
         if (line == null)
           break;
 
@@ -238,7 +251,7 @@ namespace SnomedQuery.Parser
     /// Load raw snomed description data into memory.
     /// </summary>
     /// <param name="path"></param>
-    async Task LoadDescriptions(String path)
+    void LoadDescriptions(String path)
     {
       StreamReader sr = File.OpenText(path);
       String[] parts = sr.ReadLine().Split('\t');
@@ -260,9 +273,7 @@ namespace SnomedQuery.Parser
       RF2DescriptionGroup descriptionGroup = null;
       while (true)
       {
-        Task<String> lineTask = sr.ReadLineAsync();
-        await lineTask;
-        String line = lineTask.Result;
+        String line = sr.ReadLine();
         if (line == null)
           break;
         RF2Description description = RF2Description.Parse(this, line);
@@ -342,7 +353,7 @@ namespace SnomedQuery.Parser
     /// Load raw snomed concept data into memory.
     /// </summary>
     /// <param name="path"></param>
-    async Task LoadConcepts(String path)
+    void LoadConcepts(String path)
     {
       StreamReader sr = File.OpenText(path);
       String[] parts = sr.ReadLine().Split('\t');
@@ -359,9 +370,7 @@ namespace SnomedQuery.Parser
       RF2ConceptGroup conceptGroup = null;
       while (true)
       {
-        Task<String> lineTask = sr.ReadLineAsync();
-        await lineTask;
-        String line = lineTask.Result;
+        String line = sr.ReadLine();
         if (line == null)
           break;
         RF2Concept concept = RF2Concept.Parse(this, line);
