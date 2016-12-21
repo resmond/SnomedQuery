@@ -1,11 +1,15 @@
 package SnomedQuery.Model;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.LinkedList;
 import org.joda.time.DateTime;
@@ -41,6 +45,10 @@ public class SnomedModelManager {
 	 * </p>
 	 */
 	public final char _UTF8Null = '�';
+	
+	public ByteArrayOutputStream binaryWriter;
+	
+	public ByteArrayOutputStream relationshipWriter;
 
 	/**
 	 * <p>
@@ -442,5 +450,112 @@ public class SnomedModelManager {
 		}
 		return retVal;
 	}
-
+	
+	public void serialize(){
+		this.binaryWriter = new ByteArrayOutputStream();
+		this.relationshipWriter = new ByteArrayOutputStream();
+		try {
+			FileOutputStream dataOutput = new FileOutputStream(
+					new File(this.getParsedRecordsDir() + "\\"
+							+ "SnomedQueryConcepts.Data.ser"));
+			FileOutputStream relOutput = new FileOutputStream(
+					new File(this.getParsedRecordsDir() + "\\"
+							+ "SnomedQueryConcepts.IsARelationships.ser"));
+			
+			
+			this.binaryWriter = this.Write(this.binaryWriter, this.snomedConcepts.size());
+			for (SnomedQueryConcept concept : this.snomedConcepts.values()){
+				this.SerializeConcept(concept);
+			}
+			
+			
+			dataOutput.write(this.binaryWriter.toByteArray());
+			relOutput.write(this.relationshipWriter.toByteArray());
+			
+			dataOutput.flush();
+			dataOutput.close();
+			
+			relOutput.flush();
+			relOutput.close();
+			
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	void SerializeConcept(SnomedQueryConcept concept) throws Exception {
+		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptId());
+		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptFullyQualifiedName());
+		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptSynonyms());
+		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptModule());
+		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptDefinitionStatus());
+		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptEffectiveTime().getMillis());
+		
+		this.binaryWriter = this.Write(this.binaryWriter, concept.getIsAParents().length);
+		this.binaryWriter = this.Write(this.binaryWriter, concept.getIsAChildren().length);
+		
+		
+		for (int i = 0; i < concept.getIsAChildren().length; i++){
+			SnomedQueryConcept child = concept.getIsAChildren()[i];
+			this.relationshipWriter = this.Write(this.relationshipWriter, child.getConceptId());
+			int reverseIndex = -1;
+			for (int j = 0; j < child.getIsAParents().length; j++){
+				if (child.getIsAParents()[j] == concept){
+					reverseIndex = j;
+					break;
+				}
+			}
+			
+			if (reverseIndex == -1){
+				throw new Exception("Reverse snomed index not found");
+			}
+			this.relationshipWriter = this.Write(this.relationshipWriter, reverseIndex);
+		}
+	}
+	
+	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, int value) throws IOException{
+		buffer.write(ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array());
+		return buffer;
+	}
+	
+	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, long value) throws IOException{
+		buffer.write(ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN).putLong(value).array());
+		return buffer;
+	}
+	
+	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, DateTime value) throws IOException{
+		buffer.write(ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN).putLong(value.getMillis()).array());
+		return buffer;
+	}
+	
+	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, String value) throws IOException{
+		byte[] valueBytes = value.getBytes(_charSet);
+		buffer.write(ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(value.length()).array());
+		buffer.write(ByteBuffer.allocate(valueBytes.length).order(ByteOrder.LITTLE_ENDIAN).put(valueBytes).array());
+		return buffer;
+	}
+	
+	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, long[] value) throws IOException{
+		buffer.write(ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(value.length).array());
+		for (long l : value){
+			buffer.write(ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN).putLong(l).array());;
+		}
+		return buffer;
+	}
+	
+	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, String[] value) throws IOException{
+		buffer.write(ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(value.length).array());
+		for (int i = 0; i < value.length; i++){
+			buffer = this.Write(buffer, value[i]);
+		}
+		return buffer;
+	}
 }

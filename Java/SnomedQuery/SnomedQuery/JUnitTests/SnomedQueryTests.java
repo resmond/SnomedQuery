@@ -2,7 +2,12 @@ package SnomedQuery.JUnitTests;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -106,6 +111,27 @@ public class SnomedQueryTests {
 		System.out.println(modelManager.findAncestors(clinicalFinding).length);
 		System.out.println(modelManager
 				.findAncestors(onExaminationJointSynovialThickening).length);
-
+	}
+	
+	@Test
+	public final void byteBufferTesting(){
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try {
+			byte[] b = ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(111).array();
+			baos.write(b);
+			b = ByteBuffer.allocate(Double.BYTES).order(ByteOrder.LITTLE_ENDIAN).putDouble(111.111).array();
+			baos.write(b);
+			System.out.println(baos.size());
+			System.out.println(baos);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	@Test
+	public final void deserializeToSerializeTest(){
+		SnomedModelManager modelManager = this.modelManager();
 	}
 }

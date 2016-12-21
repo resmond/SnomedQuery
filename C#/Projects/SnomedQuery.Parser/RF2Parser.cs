@@ -26,13 +26,13 @@ namespace SnomedQuery.Parser
     /// <summary>
     /// Snomed concept id for Synonym type concept
     /// </summary>
-    public const Int64 SynonymTypeId = 900000000000013009;
+    public const Int64 SynonymTypeId = 900000000000013009L;
 
 
     /// <summary>
     /// Snomed concept id for Fully Specified Name Concept
     /// </summary>
-    public const Int64 FullySpecifiedNameConceptId = 900000000000003001;
+    public const Int64 FullySpecifiedNameConceptId = 900000000000003001L;
 
     /// <summary>
     /// Top level Snomed concept.
@@ -130,8 +130,8 @@ namespace SnomedQuery.Parser
     /// <param name="path"></param>
     void LoadRelationships(String path)
     {
-      StreamReader sr = File.OpenText(path);
-      String[] parts = sr.ReadLine().Split('\t');
+      FileReader.OpenFile(path);
+      String[] parts = FileReader.ReadLine().Split('\t');
       if (
         (parts.Length != 10) ||
         (String.Compare(parts[0], "id") != 0) ||
@@ -150,7 +150,7 @@ namespace SnomedQuery.Parser
       RF2RelationshipGroup relationshipGroup = null;
       while (true)
       {
-        String line = sr.ReadLine();
+        String line = FileReader.ReadLine();
         if (line == null)
           break;
 
@@ -242,7 +242,9 @@ namespace SnomedQuery.Parser
     public RF2DescriptionGroup GetDescriptionGroup(Int64 descriptionId)
     {
       RF2DescriptionGroup descriptionGroup;
-      if (this.DescriptionGroups.TryGetValue(descriptionId, out descriptionGroup) == false)
+      if (this.DescriptionGroups.ContainsKey(descriptionId))
+        descriptionGroup = this.DescriptionGroups[descriptionId];
+      else
         throw new ApplicationException($"Description {descriptionId} not found in dictionary");
       return descriptionGroup;
     }
@@ -253,8 +255,8 @@ namespace SnomedQuery.Parser
     /// <param name="path"></param>
     void LoadDescriptions(String path)
     {
-      StreamReader sr = File.OpenText(path);
-      String[] parts = sr.ReadLine().Split('\t');
+      FileReader.OpenFile(path);
+      String[] parts = FileReader.ReadLine().Split('\t');
       if (
         (parts.Length != 9) ||
         (String.Compare(parts[0], "id") != 0) ||
@@ -273,7 +275,7 @@ namespace SnomedQuery.Parser
       RF2DescriptionGroup descriptionGroup = null;
       while (true)
       {
-        String line = sr.ReadLine();
+        String line = FileReader.ReadLine();
         if (line == null)
           break;
         RF2Description description = RF2Description.Parse(this, line);
@@ -305,6 +307,7 @@ namespace SnomedQuery.Parser
           descriptionGroup.AddDescription(description);
         }
       }
+      FileReader.CloseFile();
     }
 
     /// <summary>
@@ -355,8 +358,8 @@ namespace SnomedQuery.Parser
     /// <param name="path"></param>
     void LoadConcepts(String path)
     {
-      StreamReader sr = File.OpenText(path);
-      String[] parts = sr.ReadLine().Split('\t');
+      FileReader.OpenFile(path);
+      String[] parts = FileReader.ReadLine().Split('\t');
       if (
         (parts.Length != 5) ||
         (String.Compare(parts[0], "id") != 0) ||
@@ -370,7 +373,7 @@ namespace SnomedQuery.Parser
       RF2ConceptGroup conceptGroup = null;
       while (true)
       {
-        String line = sr.ReadLine();
+        String line = FileReader.ReadLine();
         if (line == null)
           break;
         RF2Concept concept = RF2Concept.Parse(this, line);
@@ -402,6 +405,7 @@ namespace SnomedQuery.Parser
           conceptGroup.AddConcept(concept);
         }
       }
+      FileReader.CloseFile();
     }
 
     /// <summary>
