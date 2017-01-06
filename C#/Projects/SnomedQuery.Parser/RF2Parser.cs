@@ -130,8 +130,8 @@ namespace SnomedQuery.Parser
     /// <param name="path"></param>
     void LoadRelationships(String path)
     {
-      FileReader.OpenFile(path);
-      String[] parts = FileReader.ReadLine().Split('\t');
+      StreamReader reader = new StreamReader(File.OpenRead(path));
+      String[] parts = reader.ReadLine().Split('\t');
       if (
         (parts.Length != 10) ||
         (String.Compare(parts[0], "id") != 0) ||
@@ -150,7 +150,7 @@ namespace SnomedQuery.Parser
       RF2RelationshipGroup relationshipGroup = null;
       while (true)
       {
-        String line = FileReader.ReadLine();
+        String line = reader.ReadLine();
         if (line == null)
           break;
 
@@ -255,8 +255,8 @@ namespace SnomedQuery.Parser
     /// <param name="path"></param>
     void LoadDescriptions(String path)
     {
-      FileReader.OpenFile(path);
-      String[] parts = FileReader.ReadLine().Split('\t');
+      StreamReader reader = new StreamReader(File.OpenRead(path));
+      String[] parts = reader.ReadLine().Split('\t');
       if (
         (parts.Length != 9) ||
         (String.Compare(parts[0], "id") != 0) ||
@@ -275,7 +275,7 @@ namespace SnomedQuery.Parser
       RF2DescriptionGroup descriptionGroup = null;
       while (true)
       {
-        String line = FileReader.ReadLine();
+        String line = reader.ReadLine();
         if (line == null)
           break;
         RF2Description description = RF2Description.Parse(this, line);
@@ -307,7 +307,6 @@ namespace SnomedQuery.Parser
           descriptionGroup.AddDescription(description);
         }
       }
-      FileReader.CloseFile();
     }
 
     /// <summary>
@@ -358,8 +357,8 @@ namespace SnomedQuery.Parser
     /// <param name="path"></param>
     void LoadConcepts(String path)
     {
-      FileReader.OpenFile(path);
-      String[] parts = FileReader.ReadLine().Split('\t');
+      StreamReader reader = new StreamReader(File.OpenRead(path));
+      String[] parts = reader.ReadLine().Split('\t');
       if (
         (parts.Length != 5) ||
         (String.Compare(parts[0], "id") != 0) ||
@@ -373,7 +372,7 @@ namespace SnomedQuery.Parser
       RF2ConceptGroup conceptGroup = null;
       while (true)
       {
-        String line = FileReader.ReadLine();
+        String line = reader.ReadLine();
         if (line == null)
           break;
         RF2Concept concept = RF2Concept.Parse(this, line);
@@ -405,7 +404,6 @@ namespace SnomedQuery.Parser
           conceptGroup.AddConcept(concept);
         }
       }
-      FileReader.CloseFile();
     }
 
     /// <summary>

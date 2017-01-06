@@ -1,42 +1,51 @@
 package Parser;
 
-  /** 
-   Group of relationships, all with same SNOMED id.
-  */
-  public class RF2RelationshipGroup extends TRF2ItemGroup<RF2Relationship>
-  {
-	/** 
-	 Constructor
-	*/
-	public RF2RelationshipGroup()
-	{
+/**
+ * <p>
+ * Group of relationships, all with same SNOMED id.
+ * </p>
+ * 
+ * @author Travis Lukach
+ */
+public class RF2RelationshipGroup extends TRF2ItemGroup<RF2Relationship> {
+	/**
+	 * <p>
+	 * Constructor
+	 * </p>
+	 */
+	public RF2RelationshipGroup() {
 	}
 
-	/** 
-	 Add relationsip to relationship group.
-	 
-	 @param relationship
-	*/
-	public final void AddRelationship(RF2Relationship relationship)
-	{
-	  this.items.add(relationship);
+	/**
+	 * <p>
+	 * Add relationsip to relationship group.
+	 * </p>
+	 * 
+	 * @param relationship
+	 */
+	public final void addRelationship(RF2Relationship relationship) {
+		this.items.add(relationship);
 	}
 
-	/** 
-	 Override ToString() method.
-	 
-	 @return 
-	*/
+	/**
+	 * <p>
+	 * Override ToString() method.
+	 * </p>
+	 * 
+	 * @return
+	 */
 	@Override
-	public String toString()
-	{
-	  StringBuilder sb = new StringBuilder();
-	  sb.append(String.format("RF2RelationshipGroup [%1$s] ", Id));
-	  RF2Relationship active = this.items.get(0);
-	  sb.append(String.format("Type [%1$s] '%2$s'", active.TypeId, active.getTypeConcept().GetFullySpecifiedName()));
-	  sb.append(String.format("Source [%1$s] '%2$s'", active.SourceId, active.getSource().GetFullySpecifiedName()));
-	  sb.append(String.format("Dest [%1$s] '%2$s'", active.DestinationId, active.getDestination().GetFullySpecifiedName()));
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(String.format("RF2RelationshipGroup [%1$s] ", getId()));
+		RF2Relationship active = this.items.get(0);
+		sb.append(String.format("Type [%1$s] '%2$s'", active.getTypeId(),
+				active.getTypeConcept().getFullySpecifiedName()));
+		sb.append(String.format("Source [%1$s] '%2$s'", active.getSourceId(),
+				active.getSource().getFullySpecifiedName()));
+		sb.append(String.format("Dest [%1$s] '%2$s'", active.getDestinationId(),
+				active.getDestination().getFullySpecifiedName()));
 
-	  return sb.toString();
+		return sb.toString();
 	}
-  }
+}

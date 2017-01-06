@@ -5,20 +5,23 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import org.joda.time.DateTime;
 
 /**
  * <p>
  * SnomedModelManager class, handles data parsing and queries.
  * </p>
- * 
+ *
  * @author Travis Lukach
  *
  */
@@ -44,11 +47,23 @@ public class SnomedModelManager {
 	 * The null character for UTF-8, used for validating deserialized Strings.
 	 * </p>
 	 */
-	public final char _UTF8Null = '�';
-	
-	public ByteArrayOutputStream binaryWriter;
-	
-	public ByteArrayOutputStream relationshipWriter;
+	public final char _UTF8Null = '\u00bd';
+
+	/**
+	 * <p>
+	 * java.nio.ByteBuffer wraps a byte array for serializing
+	 * <b>SnomedQueryConcept</b> concepts.
+	 * </p>
+	 */
+	private ByteArrayOutputStream binaryWriter;
+
+	/**
+	 * <p>
+	 * java.nio.ByteBuffer wraps a byte array for serailizing
+	 * <b>SnomedQueryConcept</b> relationships.
+	 * </p>
+	 */
+	private ByteArrayOutputStream relationshipWriter;
 
 	/**
 	 * <p>
@@ -77,7 +92,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * Constructs a Path to the RawData directory.
 	 * </p>
-	 * 
+	 *
 	 * @return The RawData sub-directory of baseDir.
 	 */
 	public String getRawDataDir() {
@@ -88,7 +103,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * Constructs a Path to the ParsedData directory.
 	 * </p>
-	 * 
+	 *
 	 * @return The ParsedData sub-directory of baseDir.
 	 */
 	public String getParsedRecordsDir() {
@@ -99,7 +114,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * Sets the <b>baseDir</b> object with <i>baseDirParam</i> parameter.
 	 * </p>
-	 * 
+	 *
 	 * @param baseDirParam
 	 *            Sets the baseDir value.
 	 */
@@ -170,7 +185,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * Add SNOMED query concept to model manager.
 	 * </p>
-	 * 
+	 *
 	 * @param concept
 	 *            The concept that will be inserted into <b>snomedConcepts</b>.
 	 * @throws Exception
@@ -185,14 +200,16 @@ public class SnomedModelManager {
 	}
 
 	SnomedQueryConcept deserializeConceptData() {
+		long conceptId = this.binaryReader.getLong();
+		String conceptFullyQualifiedName = this.getString();
+		String[] conceptSynonyms = this.getStringArray();
+		String conceptModule = this.getString();
+		String conceptDefinitionStatus = this.getString();
+		DateTime conceptEffectiveTime = this.getDateTime();
 
-		SnomedQueryConcept concept = new SnomedQueryConcept(
-				this.binaryReader.getLong(), // conceptId
-				this.getString(), // qualifiedName
-				this.getStringArray(), // Synonyms
-				this.getString(), // conceptModule
-				this.getString(), // conceptDefinitionSatus
-				this.getDateTime()); // conceptEffectiveTime
+		SnomedQueryConcept concept = new SnomedQueryConcept(conceptId,
+				conceptFullyQualifiedName, conceptSynonyms, conceptModule,
+				conceptDefinitionStatus, conceptEffectiveTime);
 		concept.setIsAParents(
 				new SnomedQueryConcept[this.binaryReader.getInt()]);
 		concept.setIsAChildren(
@@ -205,49 +222,18 @@ public class SnomedModelManager {
 	 * Gets the length of the char[] to be deserialized first, then deserializes
 	 * the bytes before validating them.
 	 * </p>
-	 * 
+	 *
 	 * @return Parsed and validated string created from byte[].
 	 */
 	String getString() {
-		boolean invalid = true;
-		int mod = 0;
-		String retVal = new String();
+		String retVal;
 		int length = this.binaryReader.getInt();
-
-		byte[] valChars = new byte[length];
+		char[] readChars = new char[length];
 		for (int i = 0; i < length; i++) {
-			valChars[i] = this.binaryReader.get();
+			readChars[i] = this.binaryReader.order(ByteOrder.LITTLE_ENDIAN)
+					.getChar();
 		}
-
-		try {
-			retVal = new String(valChars, this._charSet);
-			// Validation
-			while (invalid) {
-				if (retVal.length() >= length && !retVal.endsWith(this._space))
-					invalid = false;
-				if (!invalid)
-					for (char c : retVal.toCharArray()) {
-						invalid = true;
-						if (Character.isDefined(c) && c != this._UTF8Null)
-							invalid = false;
-						if (invalid)
-							break;
-					}
-				if (invalid) {
-					mod++;
-					byte[] extendBytes = new byte[length + mod];
-					for (int i = 0; i < valChars.length; i++) {
-						extendBytes[i] = valChars[i];
-					}
-					extendBytes[length + mod - 1] = this.binaryReader.get();
-					valChars = extendBytes;
-					retVal = new String(extendBytes, this._charSet);
-				}
-			}
-		} catch (UnsupportedEncodingException e) {
-			System.err.println(e.getMessage());
-			return null;
-		}
+		retVal = new String(readChars);
 		return retVal;
 
 	}
@@ -257,7 +243,7 @@ public class SnomedModelManager {
 	 * Constructs a String array by reading th length of the String array first
 	 * out of <b>binaryReader</b> before.
 	 * </p>
-	 * 
+	 *
 	 * @return Deserialized String array.
 	 */
 	String[] getStringArray() {
@@ -273,7 +259,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * constructs a JodaTime DateTime object out of <b>binaryReader</b>.
 	 * </p>
-	 * 
+	 *
 	 * @return A new DateTime object.
 	 */
 	DateTime getDateTime() {
@@ -284,7 +270,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * Link up parent/child relationships
 	 * </p>
-	 * 
+	 *
 	 * @param concept
 	 *            Concept to have relationships linked to it.
 	 */
@@ -303,9 +289,214 @@ public class SnomedModelManager {
 
 	/**
 	 * <p>
-	 * Get concept by its id. Return null if concept not found.
+	 * Serialize concepts and relationships in memory to binary
+	 * </p>
+	 */
+	public void serialize() {
+		this.binaryWriter = new ByteArrayOutputStream();
+		this.relationshipWriter = new ByteArrayOutputStream();
+		try {
+			FileOutputStream dataOutput = new FileOutputStream(
+					new File(this.getParsedRecordsDir() + "\\"
+							+ "SnomedQueryConcepts.Data.ser"));
+			FileOutputStream relOutput = new FileOutputStream(
+					new File(this.getParsedRecordsDir() + "\\"
+							+ "SnomedQueryConcepts.IsARelationships.ser"));
+			this.binaryWriter = this.write(this.binaryWriter,
+					this.snomedConcepts.size());
+			for (SnomedQueryConcept concept : this.snomedConcepts.values()) {
+				this.serializeConcept(concept);
+			}
+
+			dataOutput.write(this.binaryWriter.toByteArray());
+			relOutput.write(this.relationshipWriter.toByteArray());
+
+			dataOutput.flush();
+			dataOutput.close();
+
+			relOutput.flush();
+			relOutput.close();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * <p>
+	 * Serializes the concept and relationships.
 	 * </p>
 	 * 
+	 * @param concept
+	 * @throws Exception
+	 */
+	void serializeConcept(SnomedQueryConcept concept) throws Exception {
+		if (concept.getConceptId() == 45614000)
+			System.out.println("");
+		this.binaryWriter = this.write(this.binaryWriter,
+				concept.getConceptId());
+		this.binaryWriter = this.write(this.binaryWriter,
+				concept.getConceptFullyQualifiedName());
+		this.binaryWriter = this.write(this.binaryWriter,
+				concept.getConceptSynonyms());
+		this.binaryWriter = this.write(this.binaryWriter,
+				concept.getConceptModule());
+		this.binaryWriter = this.write(this.binaryWriter,
+				concept.getConceptDefinitionStatus());
+		this.binaryWriter = this.write(this.binaryWriter,
+				concept.getConceptEffectiveTime().getMillis());
+
+		this.binaryWriter = this.write(this.binaryWriter,
+				concept.getIsAParents().length);
+		this.binaryWriter = this.write(this.binaryWriter,
+				concept.getIsAChildren().length);
+
+		SnomedQueryConcept[] childArray = concept.getIsAChildren();
+		for (int i = 0; i < childArray.length; i++) {
+			SnomedQueryConcept child = childArray[i];
+			this.relationshipWriter = this.write(this.relationshipWriter,
+					child.getConceptId());
+			int reverseIndex = -1;
+			SnomedQueryConcept[] parentArray = child.getIsAParents();
+			for (int j = 0; j < parentArray.length; j++) {
+				if (parentArray[j].getConceptId() == concept.getConceptId()) {
+					reverseIndex = j;
+					break;
+				}
+			}
+
+			if (reverseIndex == -1) {
+				throw new Exception("Reverse snomed index not found");
+			}
+			this.relationshipWriter = this.write(this.relationshipWriter,
+					reverseIndex);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Serializes an integer value.
+	 * </p>
+	 * 
+	 * @param buffer
+	 * @param value
+	 * @return
+	 * @throws IOException
+	 */
+	public ByteArrayOutputStream write(ByteArrayOutputStream buffer, int value)
+			throws IOException {
+		buffer.write(ByteBuffer.allocate(Integer.BYTES)
+				.order(ByteOrder.LITTLE_ENDIAN).putInt(value).array());
+		return buffer;
+	}
+
+	/**
+	 * <p>
+	 * Serializes a long value.
+	 * </p>
+	 * 
+	 * @param buffer
+	 * @param value
+	 * @return
+	 * @throws IOException
+	 */
+	public ByteArrayOutputStream write(ByteArrayOutputStream buffer, long value)
+			throws IOException {
+		buffer.write(ByteBuffer.allocate(Long.BYTES)
+				.order(ByteOrder.LITTLE_ENDIAN).putLong(value).array());
+		return buffer;
+	}
+
+	/**
+	 * <p>
+	 * Serializes a long value.
+	 * </p>
+	 * 
+	 * @param buffer
+	 * @param value
+	 * @return
+	 * @throws IOException
+	 */
+	public ByteArrayOutputStream write(ByteArrayOutputStream buffer,
+			DateTime value) throws IOException {
+		buffer.write(
+				ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN)
+						.putLong(value.getMillis()).array());
+		return buffer;
+	}
+
+	/**
+	 * <p>
+	 * Serializes a String value.
+	 * </p>
+	 * 
+	 * @param buffer
+	 * @param value
+	 * @return
+	 * @throws IOException
+	 */
+	public ByteArrayOutputStream write(ByteArrayOutputStream buffer,
+			String value) throws IOException {
+		buffer.write(ByteBuffer.allocate(Integer.BYTES)
+				.order(ByteOrder.LITTLE_ENDIAN).putInt(value.length()).array());
+		for (int i = 0; i < value.length(); i++) {
+			buffer.write(ByteBuffer.allocate(Character.BYTES)
+					.order(ByteOrder.LITTLE_ENDIAN)
+					.putChar(value.toCharArray()[i]).array());
+		}
+		return buffer;
+	}
+
+	/**
+	 * <p>
+	 * Serializes a long array value.
+	 * </p>
+	 * 
+	 * @param buffer
+	 * @param value
+	 * @return
+	 * @throws IOException
+	 */
+	public ByteArrayOutputStream write(ByteArrayOutputStream buffer,
+			long[] value) throws IOException {
+		buffer.write(ByteBuffer.allocate(Integer.BYTES)
+				.order(ByteOrder.LITTLE_ENDIAN).putInt(value.length).array());
+		for (long l : value) {
+			buffer.write(ByteBuffer.allocate(Long.BYTES)
+					.order(ByteOrder.LITTLE_ENDIAN).putLong(l).array());
+		}
+		return buffer;
+	}
+
+	/**
+	 * <p>
+	 * Serializes a string array value.
+	 * </p>
+	 * 
+	 * @param buffer
+	 * @param value
+	 * @return
+	 * @throws IOException
+	 */
+	public ByteArrayOutputStream write(ByteArrayOutputStream buffer,
+			String[] value) throws IOException {
+		buffer.write(ByteBuffer.allocate(Integer.BYTES)
+				.order(ByteOrder.LITTLE_ENDIAN).putInt(value.length).array());
+		for (int i = 0; i < value.length; i++) {
+			buffer = this.write(buffer, value[i]);
+		}
+		return buffer;
+	}
+
+	/**
+	 * <p>
+	 * Get concept by its id. Return null if concept not found.
+	 * </p>
+	 *
 	 * @param id
 	 *            searched
 	 * @return the queried id. Null if not found.
@@ -320,7 +511,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * Return true if concept with child id is a child of parent.
 	 * </p>
-	 * 
+	 *
 	 * @param visitedItems
 	 *            Persisted list of items that have already been viewed.
 	 * @param parent
@@ -348,7 +539,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * Return true if parent is an ancestor of child.
 	 * </p>
-	 * 
+	 *
 	 * @param parentId
 	 *            Parent Id.
 	 * @param childId
@@ -364,7 +555,7 @@ public class SnomedModelManager {
 	/**
 	 * Collect children of parent and continue visitor pattern onward with
 	 * children.
-	 * 
+	 *
 	 * @param visitedItems
 	 *            Items already visited.
 	 * @param parent
@@ -388,8 +579,9 @@ public class SnomedModelManager {
 	 * Collect child IDs of parent and continue visitor pattern onward with
 	 * children.
 	 * </p>
-	 * 
-	 * @param conceptId the queried Id.
+	 *
+	 * @param conceptId
+	 *            the queried Id.
 	 * @return The array of child concepts.
 	 */
 	public SnomedQueryConcept[] findDescendants(long conceptId) {
@@ -411,9 +603,11 @@ public class SnomedModelManager {
 	 * <p>
 	 * Recursive Method for gathering all parents, and further up the line.
 	 * </p>
-	 * 
-	 * @param visitedItems hashMap of gathered items.
-	 * @param child current child looking for parents.
+	 *
+	 * @param visitedItems
+	 *            hashMap of gathered items.
+	 * @param child
+	 *            current child looking for parents.
 	 * @return the collected HashMap of objects.
 	 */
 	public HashMap<Long, SnomedQueryConcept> findAncestors(
@@ -432,7 +626,7 @@ public class SnomedModelManager {
 	 * <p>
 	 * The start of finding all the parent Id's from target Id.
 	 * </p>
-	 * 
+	 *
 	 * @param conceptId
 	 *            the targetId that is to be queried.
 	 * @return All the parent objects in an array.
@@ -450,112 +644,41 @@ public class SnomedModelManager {
 		}
 		return retVal;
 	}
-	
-	public void serialize(){
-		this.binaryWriter = new ByteArrayOutputStream();
-		this.relationshipWriter = new ByteArrayOutputStream();
+
+	/**
+	 * <p>
+	 * Outputs a Tab delimeted closure table file to the directory of choice.
+	 * </p>
+	 * 
+	 * @param ouputFile
+	 */
+	public void createClosureTable(String ouputFile) {
+		List<Long[]> outputSet = new ArrayList<>();
+		Long currentSource;
+		Long currentDestination;
+		File outputFile = new File(ouputFile);
 		try {
-			FileOutputStream dataOutput = new FileOutputStream(
-					new File(this.getParsedRecordsDir() + "\\"
-							+ "SnomedQueryConcepts.Data.ser"));
-			FileOutputStream relOutput = new FileOutputStream(
-					new File(this.getParsedRecordsDir() + "\\"
-							+ "SnomedQueryConcepts.IsARelationships.ser"));
-			
-			
-			this.binaryWriter = this.Write(this.binaryWriter, this.snomedConcepts.size());
-			for (SnomedQueryConcept concept : this.snomedConcepts.values()){
-				this.SerializeConcept(concept);
-			}
-			
-			
-			dataOutput.write(this.binaryWriter.toByteArray());
-			relOutput.write(this.relationshipWriter.toByteArray());
-			
-			dataOutput.flush();
-			dataOutput.close();
-			
-			relOutput.flush();
-			relOutput.close();
-			
-			
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	void SerializeConcept(SnomedQueryConcept concept) throws Exception {
-		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptId());
-		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptFullyQualifiedName());
-		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptSynonyms());
-		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptModule());
-		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptDefinitionStatus());
-		this.binaryWriter = this.Write(this.binaryWriter, concept.getConceptEffectiveTime().getMillis());
-		
-		this.binaryWriter = this.Write(this.binaryWriter, concept.getIsAParents().length);
-		this.binaryWriter = this.Write(this.binaryWriter, concept.getIsAChildren().length);
-		
-		
-		for (int i = 0; i < concept.getIsAChildren().length; i++){
-			SnomedQueryConcept child = concept.getIsAChildren()[i];
-			this.relationshipWriter = this.Write(this.relationshipWriter, child.getConceptId());
-			int reverseIndex = -1;
-			for (int j = 0; j < child.getIsAParents().length; j++){
-				if (child.getIsAParents()[j] == concept){
-					reverseIndex = j;
-					break;
+			FileWriter fWriter = new FileWriter(outputFile);
+			PrintWriter pWriter = new PrintWriter(fWriter);
+			for (SnomedQueryConcept conceptSource : this.snomedConcepts
+					.values()) {
+				currentSource = conceptSource.getConceptId();
+				SnomedQueryConcept[] conceptArray = this
+						.findDescendants(conceptSource.getConceptId());
+				for (SnomedQueryConcept conceptDestination : conceptArray) {
+					currentDestination = conceptDestination.getConceptId();
+					outputSet
+							.add(new Long[]{currentSource, currentDestination});
 				}
 			}
-			
-			if (reverseIndex == -1){
-				throw new Exception("Reverse snomed index not found");
+			for (Long[] pair : outputSet) {
+				pWriter.write(String.format("%s\t%s\n", pair[0], pair[1]));
 			}
-			this.relationshipWriter = this.Write(this.relationshipWriter, reverseIndex);
+			pWriter.close();
+
+			fWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-	}
-	
-	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, int value) throws IOException{
-		buffer.write(ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array());
-		return buffer;
-	}
-	
-	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, long value) throws IOException{
-		buffer.write(ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN).putLong(value).array());
-		return buffer;
-	}
-	
-	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, DateTime value) throws IOException{
-		buffer.write(ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN).putLong(value.getMillis()).array());
-		return buffer;
-	}
-	
-	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, String value) throws IOException{
-		byte[] valueBytes = value.getBytes(_charSet);
-		buffer.write(ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(value.length()).array());
-		buffer.write(ByteBuffer.allocate(valueBytes.length).order(ByteOrder.LITTLE_ENDIAN).put(valueBytes).array());
-		return buffer;
-	}
-	
-	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, long[] value) throws IOException{
-		buffer.write(ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(value.length).array());
-		for (long l : value){
-			buffer.write(ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN).putLong(l).array());;
-		}
-		return buffer;
-	}
-	
-	public ByteArrayOutputStream Write(ByteArrayOutputStream buffer, String[] value) throws IOException{
-		buffer.write(ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN).putInt(value.length).array());
-		for (int i = 0; i < value.length; i++){
-			buffer = this.Write(buffer, value[i]);
-		}
-		return buffer;
 	}
 }

@@ -61,13 +61,17 @@ namespace SnomedQuery.Model
     }
 
     /// <summary>
-    /// Write Int64 array.
+    /// Write String.
     /// </summary>
     public void Write(BinaryWriter bw,
       String value)
     {
       bw.Write(value.Length);
-      bw.Write(value.ToCharArray());
+      for (int i = 0; i < value.Length; i++)
+      {
+        byte[] charByte = BitConverter.GetBytes(value.ToCharArray()[i]);
+        bw.Write(charByte);
+      }
     }
   }
 }

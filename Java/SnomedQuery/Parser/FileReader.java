@@ -3,46 +3,92 @@ package Parser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Scanner;
-
+/**
+ * <p>
+ * Handler for file i/o.
+ * </p>
+ * 
+ * @author Travis Lukach
+ *
+ */
 public class FileReader {
-	
-	public FileReader(){
-		
+	/**
+	 * <p>
+	 * Constructor.
+	 * </p>
+	 */
+	public FileReader() {
 	}
-	
-	public static Scanner reader;
-	
-	public boolean openFile(String path){
+
+	/**
+	 * <p>
+	 * accessable Scanner Object.
+	 * </p>
+	 */
+	private static Scanner reader;
+
+	/**
+	 * <p>
+	 * Opens target file.
+	 * </p>
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public final boolean openFile(final String path) {
 		try {
 			FileInputStream file = new FileInputStream(new File(path));
-			reader = new Scanner(file);
+			reader = new Scanner(file, "UTF8");
 			return true;
-		} catch (Exception e){
+		} catch (Exception e) {
 			return false;
 		}
 	}
-	
-	public String readLine() {
-		if (reader == null)
+
+	/**
+	 * <p>
+	 * Returns a read line in a text file.
+	 * <p>
+	 * 
+	 * @return
+	 */
+	public final String readLine() {
+		if (reader == null) {
 			return null;
-		if (!reader.hasNext())
+		}
+		if (!reader.hasNext()) {
 			return null;
-		else
+		} else {
 			return reader.nextLine();
+		}
 	}
-	
-	public static void closeFile(){
-		if (reader == null)
+
+	/**
+	 * <p>
+	 * Closes the file.
+	 * </p>
+	 */
+	public static void closeFile() {
+		if (reader == null) {
 			return;
+		}
 		reader.close();
 		reader = null;
 	}
-	
-	public static String comboPaths(String[] args){
+
+	/**
+	 * <p>
+	 * Returns a file path built from the string array parameter
+	 * </p>
+	 * 
+	 * @param args
+	 * @return
+	 */
+	public static String comboPaths(final String[] args) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(args[0]);
-		for (int i = 1; i<args.length; i++){
-			sb.append("//"+args[i]);
+		for (int i = 1; i < args.length; i++) {
+			sb.append("\\" + args[i]);
 		}
 		return sb.toString();
 	}

@@ -7,3 +7,11 @@ updated JavaDoc comments in source code.
   
 1.0.2
 Added two closure methdods. Updated the javadocs.
+
+1.1.1
+Java library can now parse and serailze SnomedConcepts.  The serialized data can be utilized on the
+C# side if parsed by java.
+Closure output methods are created on both c# and java. Only output path needs to be specified.
+The output between source ID and destination ID are tab delimited.
+Serialized output for strings has been modified to write 2 byte arrays per character.  It enables
+Java and C# data to be interchanged without needing to be concerned about encoding.
