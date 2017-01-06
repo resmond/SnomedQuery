@@ -376,5 +376,34 @@ namespace SnomedQuery.Model
       decendentIDs.Values.CopyTo(retVal, 0);
       return retVal;
     }
+
+
+    /// <summary>
+    /// Outputs a Tab delimeted closure table file to the directory of choice.
+    /// </summary>
+    /// <param name="outputFile"></param>
+    public void CreateClosureTable(String outputFile)
+    {
+      List<long[]> outputSet = new List<long[]>();
+      long currentSource;
+      long currentDestination;
+      using (StreamWriter sWriter = new StreamWriter(outputFile))
+      {
+        foreach (SnomedQueryConcept concept in this.snomedConcepts.Values)
+        {
+          currentSource = concept.ConceptId;
+          SnomedQueryConcept[] conceptArray = this.FindDecendents(concept.ConceptId);
+          foreach (SnomedQueryConcept descendant in conceptArray)
+          {
+            currentDestination = descendant.ConceptId;
+            outputSet.Add(new long[] { currentSource, currentDestination });
+          }
+        }
+        foreach (long[] pair in outputSet)
+        {
+          sWriter.WriteLine(String.Format("{0}\t{1}", pair[0], pair[1]));
+        }
+      }
+    }
   }
 }

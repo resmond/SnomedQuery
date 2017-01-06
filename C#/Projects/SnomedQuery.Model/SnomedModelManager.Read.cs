@@ -37,12 +37,19 @@ namespace SnomedQuery.Model
     }
 
     /// <summary>
-    /// Read string array and return it.
+    /// Read string and return it.
     /// </summary>
     public String ReadString(BinaryReader br)
     {
       Int32 charCount = br.ReadInt32();
-      return new String(br.ReadChars(charCount));
+      char[] charsRead = new char[charCount];
+      byte[] byteChar = new byte[2];
+      for (int i = 0; i < charCount; i++)
+      {
+        byteChar = br.ReadBytes(2);
+        charsRead[i] = BitConverter.ToChar(byteChar, 0);
+      }
+      return charsRead.ToString();
     }
 
     /// <summary>

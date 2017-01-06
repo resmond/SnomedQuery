@@ -113,5 +113,12 @@ namespace SnomedQuery.NUnitTests
       // OnExaminationJointSynovialThickening is NOT child of specimen.
       Assert.IsFalse(modelManger.IsChild(Specimen, OnExaminationJointSynovialThickening));
     }
+
+    [Test]
+    public void ModelManager_ClosureTable()
+    {
+      SnomedModelManager modelManager = this.ModelManager();
+      modelManager.CreateClosureTable("csClosureTest.txt");
+    }
   }
 }
